@@ -5,9 +5,20 @@
 
 #include "component.hpp"
 
-Component::~Component() = default;
+Component::~Component() {
+    if (state != State::Destroyed) {
+        OnDestroy();
+        state = State::Destroyed;
+    }
+}
 
-void Component::Initialize() {}
+void Component::Initialize() {
+    if (state == State::Uninitialized) {
+        state = State::Initialized;
+        OnInitialize();
+        state = State::Active;
+    }
+}
 
 void Component::Update(float /*deltaTime*/) {}
 

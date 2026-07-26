@@ -12,6 +12,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "component.hpp"
@@ -33,6 +34,7 @@ private:
     std::string name;                     ///< 实体名称
     bool active = true;                   ///< 激活状态，非激活时跳过 Update/Render
     std::vector<ComponentPtr> components; ///< 持有所有组件
+    std::unordered_map<size_t, Component*> componentMap; ///< 按类型索引组件，便于快速查找
 
 public:
     /** @brief 构造实体并命名 */
@@ -73,11 +75,17 @@ public:
     template<typename T, typename... Args>
         requires is_base_of<Component, T>
     T* AddComponent(Args&&... args) {
+        size_t typeID = Component::GetTypeID<T>();
+        if (componentMap.find(typeID) != componentMap.end()) {
+            // 如果已经存在该类型的组件，则返回现有组件
+            return static_cast<T*>(componentMap[typeID]);
+        }
         auto& component = components.emplace_back(
             std::make_unique<T>(std::forward<Args>(args)...)
         );
         component->SetOwner(this);
         component->Initialize();
+        componentMap[typeID] = component.get();
         return static_cast<T*>(component.get());
     }
 
@@ -89,11 +97,11 @@ public:
      */
     template<typename T>
     T* GetComponent() {
-        auto view = components
-            | std::views::filter([](auto& uptr) { return dynamic_cast<T*>(uptr.get()); })
-            | std::views::transform([](auto& uptr) { return static_cast<T*>(uptr.get()); });
-        auto it = view.begin();
-        return it != view.end() ? *it : nullptr;
+        size_t typeID = Component::GetTypeID<T>();
+        if (componentMap.find(typeID) != componentMap.end()) {
+            return static_cast<T*>(componentMap[typeID]);
+        }
+        return nullptr;
     }
 
     /**
@@ -104,7 +112,11 @@ public:
      */
     template<typename T>
     bool RemoveComponent() {
-        auto oldSize = components.size();
+        size_t typeID = Component::GetTypeID<T>();
+        if (componentMap.find(typeID) != componentMap.end()) {
+            componentMap.erase(typeID);
+        }
+        size_t oldSize = components.size();
         std::erase_if(components, [](auto& uptr) { return dynamic_cast<T*>(uptr.get()) != nullptr; });
         return components.size() != oldSize;
     }

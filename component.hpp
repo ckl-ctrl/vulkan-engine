@@ -11,6 +11,17 @@
 /** @brief 前置声明，Component 仅通过指针引用实体 */
 class Entity;
 
+class ComponentTypeIDSystem {
+private:
+    static inline size_t nextTypeID = 0;  ///< 下一个可用组件类型 ID
+public:
+    template <typename T>
+    static size_t GetTypeID() {
+        static const size_t typeID = nextTypeID++;
+        return typeID;
+    }
+};
+
 /**
  * @brief 组件基类
  *
@@ -18,27 +29,50 @@ class Entity;
  * 并实现 Initialize / Update / Render 生命周期方法。
  */
 class Component {
+public:
+    enum class State {
+        Uninitialized,  ///< 未初始化
+        Initialized,    ///< 已初始化
+        Active,         ///< 活跃中
+        Destroying,     ///< 正在销毁
+        Destroyed       ///< 已销毁
+    };
 protected:
+    State state = State::Uninitialized;  ///< 当前组件状态
     Entity* owner = nullptr;    ///< 所属实体指针
 
 public:
     virtual ~Component();       ///< 虚析构，保证派生类正确析构
 
+    template <typename T>
+    static size_t GetTypeID() {
+        return ComponentTypeIDSystem::GetTypeID<T>();
+    }
+    
     /** @brief 组件初始化，在 AddComponent 时调用 */
     virtual void Initialize();
 
-    /**
-     * @brief 每帧更新
-     * @param deltaTime 帧间隔时间（秒）
-     */
-    virtual void Update(float deltaTime);
+    void Destroy() {
+        if (state == State::Active) {
+            state = State::Destroying;
+            OnDestroy();
+            state = State::Destroyed;
+        }
+    }
 
-    /** @brief 渲染阶段回调 */
-    virtual void Render();
+    bool IsActive() const { return state == State::Active; }
 
     /** @brief 设置所属实体 */
     void SetOwner(Entity* entity);
 
     /** @brief 获取所属实体 */
     Entity* GetOwner() const;
+
+protected:
+    virtual void OnInitialize() {}  ///< 初始化回调，派生类可重写
+    virtual void OnDestroy() {}     ///< 销毁回调，派生类可重写
+    virtual void Update(float deltaTime);  ///< 更新回调，派生类可重写
+    virtual void Render();      ///< 渲染回调，派生类可重写
+
+    friend class Entity;  ///< 允许 Entity 访问私有成员
 };

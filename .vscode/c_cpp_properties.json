@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "E:/vs/VC/Tools/MSVC/14.51.36231/include",
+                "E:/vs/VC/Tools/MSVC/14.51.36231/atlmfc/include",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/ucrt",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/um",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/shared",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/winrt",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/cppwinrt",
+                "${env:VULKAN_SDK}/Include",
+                "${workspaceFolder}/external/glm"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1",
+                "VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1",
+                "NOMINMAX",
+                "WIN32_LEAN_AND_MEAN"
+            ],
+            "compilerPath": "E:/vs/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

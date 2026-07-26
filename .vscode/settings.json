@@ -1,0 +1,23 @@
+{
+    "C_Cpp.default.intelliSenseMode": "windows-msvc-x64",
+    "C_Cpp.default.compilerPath": "E:/vs/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "E:/vs/VC/Tools/MSVC/14.51.36231/include",
+        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/ucrt",
+        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/um",
+        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.28000.0/shared",
+        "${env:VULKAN_SDK}/Include"
+    ],
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false
+    },
+    "github.copilot.editor.enableAutoCompletions": true,
+    "github.copilot.advanced": {
+        "inlineSuggestCount": 3
+    }
+}

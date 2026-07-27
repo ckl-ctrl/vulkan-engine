@@ -4,6 +4,10 @@ project(GUIEngine VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Vulkan
+find_package(Vulkan REQUIRED)
 
 # GLM — 优先使用项目内置的 external/glm
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
@@ -39,6 +43,11 @@ add_executable(GUIEngine ${SOURCES} ${HEADERS})
 target_include_directories(GUIEngine PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${GLM_INCLUDE_DIR}"
+    "${Vulkan_INCLUDE_DIR}"
+)
+
+target_link_libraries(GUIEngine PRIVATE
+    Vulkan::Vulkan
 )
 
 # MSVC 编译选项
@@ -52,5 +61,7 @@ if(MSVC)
     target_compile_definitions(GUIEngine PRIVATE
         NOMINMAX
         WIN32_LEAN_AND_MEAN
+        VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+        VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
     )
 endif()

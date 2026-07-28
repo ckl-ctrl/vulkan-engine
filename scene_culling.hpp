@@ -7,6 +7,10 @@
  */
 
 #include "camera_component.hpp"
+#include "entity.hpp"
+#include "mesh_component.hpp"
+#include "transform_component.hpp"
+
 
 /**
  * @brief 视锥体剔除系统

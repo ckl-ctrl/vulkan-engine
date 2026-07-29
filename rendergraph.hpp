@@ -186,7 +186,12 @@ public:
             viewInfo.setImage(*resource.image)                            // 引用已创建的图像
                     .setViewType(vk::ImageViewType::e2D)                   // 2D 视图类型
                     .setFormat(resource.format)                            // 匹配图像格式
-                    .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});  // 完整图像访问
+                    .setSubresourceRange({
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1});  // 完整图像访问
 
             resource.view = device.createImageView(viewInfo);             // 创建着色器可访问的视图
         }
@@ -248,7 +253,12 @@ public:
                        .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)                // 无队列族转移
                        .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                        .setImage(*resource.image)                                      // 目标图像
-                       .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1})  // 完整图像范围
+                       .setSubresourceRange({
+                        .aspectMask = vk::ImageAspectFlagBits::eColor, 
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1})  // 完整图像范围
                        .setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite)             // 之前的写访问
                        .setDstAccessMask(vk::AccessFlagBits::eShaderRead);             // 需要的读访问
 
@@ -271,7 +281,12 @@ public:
                        .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                        .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                        .setImage(*resource.image)
-                       .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1})
+                       .setSubresourceRange({
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1})
                        .setSrcAccessMask(vk::AccessFlagBits::eMemoryRead)              // 之前的读访问
                        .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);   // 需要的写访问
 
@@ -299,7 +314,12 @@ public:
                        .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                        .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                        .setImage(*resource.image)
-                       .setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1})
+                       .setSubresourceRange({
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1})
                        .setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)    // 之前的写操作
                        .setDstAccessMask(vk::AccessFlagBits::eMemoryRead);             // 允许后续读取
 

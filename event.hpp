@@ -1,8 +1,44 @@
 #include "entity.hpp"
+#include <mutex>
+#include <queue>
 
 class Event {
 public:
     virtual ~Event() = default;
+
+    virtual const char* GetType() const = 0;
+    virtual Event* Clone() const = 0;
+};
+
+#define DEFINE_EVENT_TYPE(type) \
+    static const char* GetStaticType() { return #type; } \
+    const char* GetType() const override { return GetStaticType(); } \
+    Event* Clone() const override { return new type(*this); }
+
+class WindowResizeEvent : public Event {
+private:
+    int width;
+    int height;
+public:
+    WindowResizeEvent(int w, int h) : width(w), height(h) {}
+
+    int GetWidth() const { return width; }
+    int GetHeight() const { return height; }
+
+    DEFINE_EVENT_TYPE(WindowResizeEvent)
+};
+
+class KeyPressEvent : public Event {
+private:
+    int keyCode;
+    bool repeat;
+public:
+    KeyPressEvent(int code, bool isRepeat) : keyCode(code), repeat(isRepeat) {}
+
+    int GetKeyCode() const { return keyCode; }
+    bool IsRepeat() const { return repeat; }
+
+    DEFINE_EVENT_TYPE(KeyPressEvent)
 };
 
 class CollisionEvent : public Event {
@@ -15,6 +51,8 @@ public:
 
     Entity* GetEntity1() const { return entity1; }
     Entity* GetEntity2() const { return entity2; }
+
+    DEFINE_EVENT_TYPE(CollisionEvent)
 };
 
 class EventListener {
@@ -23,11 +61,35 @@ public:
     virtual void OnEvent(Event* event) = 0;
 };
 
-class EventSystem {
+class EventDispatcher {
 private:
-    std::vector<EventListener*> listeners;
+    const Event& event;
 
 public:
+    explicit EventDispatcher(const Event& e) : event(e) {}
+
+    template<typename T, typename F>
+    bool Dispatch(const F& func) {
+        if (event.GetType() == T::GetStaticType()) {
+            func(static_cast<const T&>(event));
+            return true;
+        }
+        return false;
+    }
+};
+
+class EventBus {
+private:
+    std::vector<EventListener*> listeners;
+    std::queue<std::unique_ptr<Event>> eventQueue;
+    std::mutex queueMutex;
+    bool immediateMode = false;
+
+public:
+    void SetImmediateMode(bool mode) {
+        immediateMode = mode;
+    }
+
     void AddListener(EventListener* listener) {
         listeners.push_back(listener);
     }
@@ -36,12 +98,35 @@ public:
         std::erase(listeners, listener);
     }
 
-    void DispatchEvent(Event* event) {
-        for (auto listener : listeners) {
-            listener->OnEvent(event);
+    void PublishEvent(std::unique_ptr<Event> event) {
+        if (immediateMode) {
+            for (auto listener : listeners) {
+                listener->OnEvent(event.get());
+            }
+        } else {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            eventQueue.push(std::move(event));
         }
     }
+
+    void ProcessEvents() {
+        if (immediateMode) return;
+        std::queue<std::unique_ptr<Event>> eventsToProcess;
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            std::swap(eventsToProcess, eventQueue);
+        }
+        while (!eventsToProcess.empty()) {
+            auto& event = eventsToProcess.front();
+            for (auto listener : listeners) {
+                listener->OnEvent(event.get());
+            }
+            eventsToProcess.pop();
+        }
+    }
+
 };
+
 
 class PhysicsComponent : public Component, public EventListener {
 public:
@@ -63,8 +148,8 @@ public:
     }
 
 private:
-    EventSystem& GetEventSystem() {
-        static EventSystem eventSystem;
+    EventBus& GetEventSystem() {
+        static EventBus eventSystem;
         return eventSystem;
     }
 };

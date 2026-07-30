@@ -133,3 +133,34 @@ TEST_F(VulkanTest, PassWithUnregisteredResource) {
 
     EXPECT_NO_THROW(graph.Compile());
 }
+
+// ============================================================
+// 已知局限：barrier 的 oldLayout 始终硬取 resource.initialLayout
+//
+// 触发条件：同一个资源被超过一个 Pass 使用（读或写）。
+// P0 输出 A → A 最终布局变为 eShaderReadOnlyOptimal
+// P1 输入 A → 但 barrier 里的 oldLayout 仍然是 eUndefined（错！）
+// P1 输出 B → B 最终布局变为 eShaderReadOnlyOptimal
+// P2 输入 B → 但 barrier 里的 oldLayout 仍然是 eUndefined（错！）
+// ============================================================
+
+TEST_F(VulkanTest, SubsequentPassBarrierUsesWrongOldLayout) {
+    Rendergraph graph(device);
+
+    graph.AddResource("A", vk::Format::eR8G8B8A8Unorm, {640, 480},
+        vk::ImageUsageFlagBits::eColorAttachment,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+    graph.AddResource("B", vk::Format::eR8G8B8A8Unorm, {640, 480},
+        vk::ImageUsageFlagBits::eColorAttachment,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    // P0: 写 A → A 最终布局 eShaderReadOnlyOptimal
+    // P1: 读 A 写 B → A 的 input barrier: oldLayout = eUndefined（实际已被 P0 切成 eShaderReadOnlyOptimal）
+    //                 → B 的 output barrier: oldLayout = eUndefined（合理，首次用）
+    // P2: 读 B   → B 的 input barrier: oldLayout = eUndefined（实际已被 P1 切成 eShaderReadOnlyOptimal）
+    graph.AddPass("P0", {},    {"A"}, kNoOp);
+    graph.AddPass("P1", {"A"}, {"B"}, kNoOp);  // ← A 的 barrier 错误
+    graph.AddPass("P2", {"B"}, {},    kNoOp);  // ← B 的 barrier 错误
+
+    EXPECT_NO_THROW(graph.Compile());
+}
